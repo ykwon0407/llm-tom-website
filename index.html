@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What LLMs Think When You Don't Tell Them What to Think About</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        /* Light theme (default) */
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f6f8fa;
+            --bg-card: #ffffff;
+            --accent: #0969da;
+            --accent-hover: #0550ae;
+            --accent-green: #1a7f37;
+            --accent-purple: #8250df;
+            --accent-orange: #bf8700;
+            --text-primary: #1f2328;
+            --text-secondary: #656d76;
+            --border: #d0d7de;
+            --gradient-1: #8b5cf6;
+            --gradient-2: #3b82f6;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+        }
+
+        /* Dark theme */
+        [data-theme="dark"] {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-card: #21262d;
+            --accent: #58a6ff;
+            --accent-hover: #79b8ff;
+            --accent-green: #3fb950;
+            --accent-purple: #a371f7;
+            --accent-orange: #d29922;
+            --text-primary: #f0f6fc;
+            --text-secondary: #8b949e;
+            --border: #30363d;
+            --gradient-1: #7c3aed;
+            --gradient-2: #2563eb;
+            --shadow-color: rgba(0, 0, 0, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.7;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        .bg-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(ellipse at 20% 20%, rgba(124, 58, 237, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(37, 99, 235, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(88, 166, 255, 0.03) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            transition: background 0.3s ease;
+        }
+
+        [data-theme="dark"] .bg-pattern {
+            background: 
+                radial-gradient(ellipse at 20% 20%, rgba(124, 58, 237, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(37, 99, 235, 0.12) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(88, 166, 255, 0.05) 0%, transparent 70%);
+        }
+
+        /* Theme toggle button */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--accent);
+            color: var(--text-primary);
+        }
+
+        .theme-toggle .label-day,
+        .theme-toggle .label-night {
+            transition: opacity 0.3s ease;
+        }
+
+        /* Light mode (default): show "Night" option */
+        .theme-toggle .label-day {
+            display: none;
+        }
+
+        .theme-toggle .label-night {
+            display: inline;
+        }
+
+        /* Dark mode: show "Day" option */
+        [data-theme="dark"] .theme-toggle .label-day {
+            display: inline;
+        }
+
+        [data-theme="dark"] .theme-toggle .label-night {
+            display: none;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 60px 24px;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .badge {
+            display: inline-block;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--accent);
+            background: rgba(88, 166, 255, 0.1);
+            border: 1px solid rgba(88, 166, 255, 0.3);
+            padding: 6px 14px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: clamp(1.5rem, 3.5vw, 2rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-bottom: 24px;
+        }
+
+        .authors a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .authors a:hover {
+            text-decoration: underline;
+        }
+
+        .author-name {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .links {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .link-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            padding: 10px 18px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .link-btn:hover {
+            border-color: var(--accent);
+            background: var(--bg-card);
+        }
+
+        /* Abstract */
+        .abstract {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 48px;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+
+        .abstract h2 {
+            font-size: 1.25rem;
+            margin-bottom: 16px;
+            color: var(--accent);
+        }
+
+        .abstract p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .abstract strong {
+            color: var(--text-primary);
+        }
+
+        /* Content Sections */
+        .content-section {
+            margin-bottom: 48px;
+        }
+
+        .content-section p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-bottom: 16px;
+            line-height: 1.8;
+        }
+
+        .content-section p:last-child {
+            margin-bottom: 0;
+        }
+
+        .content-section strong {
+            color: var(--text-primary);
+        }
+
+        .content-section em {
+            color: var(--accent);
+            font-style: normal;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.9em;
+            background: rgba(9, 105, 218, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        [data-theme="dark"] .content-section em {
+            background: rgba(88, 166, 255, 0.1);
+        }
+
+        blockquote {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent);
+            border-radius: 0 12px 12px 0;
+            padding: 20px 24px;
+            margin: 24px 0;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            font-style: italic;
+        }
+
+        /* Hero Figure */
+        .hero-figure {
+            margin-bottom: 64px;
+        }
+
+        .figure-container {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 12px;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+
+        .figure-placeholder {
+            background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-primary) 100%);
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.9rem;
+        }
+
+        .figure-container img {
+            width: 100%;
+            height: auto;
+            border-radius: 12px;
+        }
+
+        .figure-caption {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            padding: 0 16px;
+        }
+
+        /* Key Results */
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 28px;
+            background: linear-gradient(180deg, var(--gradient-1), var(--gradient-2));
+            border-radius: 2px;
+        }
+
+        .results-grid {
+            display: grid;
+            gap: 24px;
+            margin-bottom: 64px;
+        }
+
+        .result-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+            transition: all 0.3s ease, background 0.3s ease;
+        }
+
+        .result-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .result-card .result-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .result-number {
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--gradient-1), var(--gradient-2));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .result-card h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0;
+            flex: 1;
+        }
+
+        .result-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 16px;
+        }
+
+        .result-card p a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .result-card p a:hover {
+            text-decoration: underline;
+        }
+
+        .result-figure {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            height: auto;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.8rem;
+            padding: 16px;
+        }
+
+        .result-figure img {
+            width: 100%;
+            height: auto;
+            max-height: 500px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        /* Interactive Visualizations */
+        .viz-section {
+            margin-bottom: 64px;
+        }
+
+        .viz-cards {
+            display: grid;
+            gap: 20px;
+        }
+
+        .viz-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .viz-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--gradient-1), var(--gradient-2));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .viz-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px var(--shadow-color);
+        }
+
+        .viz-card:hover::before {
+            opacity: 1;
+        }
+
+        .viz-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            flex-shrink: 0;
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(124, 58, 237, 0.1));
+            border: 1px solid rgba(124, 58, 237, 0.3);
+        }
+
+        .viz-card:nth-child(2) .viz-icon {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(37, 99, 235, 0.1));
+            border: 1px solid rgba(37, 99, 235, 0.3);
+        }
+
+        .viz-content {
+            flex: 1;
+        }
+
+        .viz-card h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .viz-card h3 svg {
+            opacity: 0;
+            transform: translateX(-8px);
+            transition: all 0.3s ease;
+        }
+
+        .viz-card:hover h3 svg {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .viz-card p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .viz-meta {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        .meta-tag {
+            background: var(--bg-card);
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        /* Citation */
+        .citation {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 48px;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+
+        .citation h2 {
+            font-size: 1.25rem;
+            margin-bottom: 16px;
+            color: var(--accent);
+        }
+
+        .citation-box {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .citation-box pre {
+            margin: 0;
+            white-space: pre-wrap;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .copy-btn:hover {
+            border-color: var(--accent);
+            color: var(--text-primary);
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding-top: 32px;
+            border-top: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        footer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 40px 16px;
+            }
+
+            .viz-card {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .result-card .result-header {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .figure-placeholder {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark/light mode">
+        <span class="label-day">☀️ Day</span>
+        <span class="label-night">🌙 Night</span>
+    </button>
+
+    <div class="bg-pattern"></div>
+    
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <!-- <div class="badge">ICML 2026</div> -->
+            <h1>What LLMs Think When You Don't Tell Them What to Think About</h1>
+            <p class="authors">
+                <span class="author-name">Yongchan Kwon</span><sup>1</sup>, 
+                <span class="author-name">James Zou</span><sup>2</sup>
+                <br>
+                <span style="font-size: 0.9rem;"><sup>1</sup>Togehter AI, <sup>2</sup>Stanford University</span>
+            </p>
+            <div class="links">
+                <a href="#" class="link-btn">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M5.75 1a.75.75 0 0 0-.75.75v3c0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75v-3a.75.75 0 0 0-.75-.75h-4.5zM2.5 5.25a.75.75 0 0 1 .75-.75h9.5a.75.75 0 0 1 .75.75v9a.75.75 0 0 1-.75.75h-9.5a.75.75 0 0 1-.75-.75v-9z"/></svg>
+                    Paper
+                </a>
+                <a href="https://github.com/ykwon0407/LLM_TOM" class="link-btn">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+                    Code
+                </a>
+                <a href="https://huggingface.co/datasets/ykwon-hf/unconditional_text_generation" class="link-btn">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M3.5 3.75a.25.25 0 0 1 .25-.25h8.5a.25.25 0 0 1 .25.25v8.5a.25.25 0 0 1-.25.25h-8.5a.25.25 0 0 1-.25-.25v-8.5zM3.75 2A1.75 1.75 0 0 0 2 3.75v8.5c0 .966.784 1.75 1.75 1.75h8.5A1.75 1.75 0 0 0 14 12.25v-8.5A1.75 1.75 0 0 0 12.25 2h-8.5z"/></svg>
+                    Dataset
+                </a>
+                <a href="interactive_LLM_top_of_mind.html" class="link-btn">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M1.5 1.75V13.5h13.75a.75.75 0 0 1 0 1.5H.75a.75.75 0 0 1-.75-.75V1.75a.75.75 0 0 1 1.5 0zm14.28 2.53-5.25 5.25a.75.75 0 0 1-1.06 0L7 7.06 4.28 9.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.25-3.25a.75.75 0 0 1 1.06 0L10 7.94l4.72-4.72a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042z"/></svg>
+                    Interactive Figure
+                </a>
+            </div>
+        </header>
+
+        <!-- Abstract -->
+        <section class="abstract">
+            <h2>TLDR</h2>
+            <p>
+                Our interactions with large language models (LLMs) are dominated by task- or topic-specific questions, such as “solve this coding problem” or “what is democracy?” This framing strongly shapes how LLMs generate responses, constraining the range of behaviors and knowledge that can be observed. We study the behavior of LLMs using minimal, topic-neutral prompts like <em>"Actually,"</em> or <em>"I want to explore something."</em> Despite the absence of explicit task or topic specification, models exhibit strong and systematic preferences over semantic domains, revealing distinct knowledge priors across model families. 
+            </p>
+        </section>
+
+        <!-- What Do We Study
+        <section class="content-section">
+            <h2 class="section-title">What Do We Study?</h2>
+            <p>
+                Most LLM behavior analyses are <strong>constrained</strong>: the prompt heavily shapes what the model can say. 
+                This is useful—but it is also deeply limiting.
+            </p>
+            <p>
+                Prompts act like filters. A math question forces mathematical reasoning; a chat template forces the model 
+                into an assistant persona. Large parts of the model's generative space are never exercised at all. 
+                What we observe is not the model's natural behavior, but the behavior induced by our instructions. 
+                So we ask a more basic question:
+            </p>
+            <blockquote>
+                What does a language model generate when you do not tell it what to generate?
+            </blockquote>
+            <p>
+                To answer this, we study <strong>near-unconstrained generation</strong>. We use topic-neutral, open-ended 
+                seed prompts such as <em>"Actually,"</em> <em>"Let's think step by step,"</em> or even just punctuation 
+                like <em>"."</em> We remove chat templates entirely—no system prompt, no roles—and use standard decoding. 
+                This setup approximates the model's <strong>top-of-mind behavior</strong>: a glimpse of its learned 
+                generative prior before alignment and prompting take over.
+            </p>
+        </section>
+        <section class="content-section">
+            <h2 class="section-title">Why This Matters</h2>
+            <p>
+                If you care about <strong>model auditing</strong>, <strong>behavioral monitoring</strong>, 
+                <strong>LLM fingerprinting</strong>, or <strong>safety and privacy risks</strong>, conditional 
+                benchmarks alone are not enough.
+            </p>
+            <p>
+                Near-unconstrained generation allows us to observe what models prefer to talk about, what kinds of 
+                content they over-represent, and how they fail when guardrails are removed. Crucially, these signals 
+                turn out to be <strong>systematic rather than anecdotal</strong>.
+            </p>
+        </section> -->
+
+        <!-- Key Results -->
+        <section class="results-section">
+            <h2 class="section-title">Key Results</h2>
+            
+            <div class="results-grid">
+                <!-- Result 1 -->
+                <div class="result-card">
+                    <div class="result-header">
+                        <div class="result-number">1</div>
+                        <h3>A broad and diverse range of topics</h3>
+                    </div>
+                    <p>
+                        Semantic map of near-unconstrained LLM generations. Each point represents a generated sample; colors denote semantic categories inferred post-hoc. Even without explicit topics, outputs cluster into clear regions. 
+                    </p>
+                    <div class="result-figure">
+                        <img src="figures/figure1.png" alt="Topic distribution">
+                    </div>
+                </div>
+
+                <!-- Result 2 -->
+                <div class="result-card">
+                    <div class="result-header">
+                        <div class="result-number">2</div>
+                        <h3>A heavy concentration on programming and mathematics among frontier LLMs</h3>
+                    </div>
+                    <p>
+                        Top semantic categories by model family under near-unconstrained generation. Each family exhibits a stable and interpretable topic distribution. GPT-OSS overwhelmingly defaults to programming and mathematics, often at surprisingly advanced levels. Llama produces far more literary and narrative text, with less emphasis on technical domains. DeepSeek generates religious content at a substantially higher rate than other families. Qwen frequently outputs multiple-choice exam questions, complete with answer options.
+                    </p>
+                    <div class="result-figure">
+                        <img src="figures/figure2.png" alt="Model family comparison">
+                    </div>
+                </div>
+
+                <!-- Result 3 -->
+                <div class="result-card">
+                    <div class="result-header">
+                        <div class="result-number">3</div>
+                        <h3>Examples of model outputs under unconstrained settings</h3>
+                    </div>
+                    <p>
+                        More examples are provided in the <a href="interactive_LLM_top_of_mind.html">interactive figure</a>.
+                    </p>
+                    <div class="result-figure">
+                        <img src="figures/figure3.png" alt="Starter phrase influence">
+                    </div>
+                </div>
+
+                <!-- Result 4 -->
+                <div class="result-card">
+                    <div class="result-header">
+                        <div class="result-number">4</div>
+                        <h3>Is GPT-OSS the most technically advanced model?</h3>
+                    </div>
+                    <p>
+                        Distribution of difficulty levels in mathematics and programming. Advanced and expert-level content appears far more often in GPT-OSS outputs. When we examine math and programming outputs, GPT-OSS frequently produces advanced or expert-level content, such as graph algorithms or dynamic programming. Llama and Qwen skew much more toward basic or intermediate material. These depth differences remain even when controlling for labeling models and evaluation setups.
+                    </p>
+                    <div class="result-figure">
+                        <img src="figures/figure4.png" alt="Semantic clusters">
+                    </div>
+                </div>
+
+                <!-- Result 5 -->
+                <div class="result-card">
+                    <div class="result-header">
+                        <div class="result-number">5</div>
+                        <h3>Degenerate Text Is a Signal, Not Just Noise</h3>
+                    </div>
+                    <p>
+                        (Top) Degenerate text behavior across model families. Degeneration frequency, onset position, and repetition length vary substantially by model. (Bottom) Examples of degenerate text. We mask text in Llama, as the links are accessible to personal social accounts. When constraints are removed, models sometimes fall into repetitive or degenerate patterns. This behavior is usually discarded as garbage. We treated it as data.
+                    </p>
+                    <div class="result-figure">
+                        <img src="figures/figure5.png" alt="Difficulty distribution">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive Visualizations -->
+        <section class="viz-section">
+            <h2 class="section-title">Interactive Visualizations</h2>
+            
+            <div class="viz-cards">
+                <a href="interactive_LLM_top_of_mind.html" class="viz-card">
+                    <div class="viz-icon">🗺️</div>
+                    <div class="viz-content">
+                        <h3>
+                            Topic-based Embedding Explorer
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </h3>
+                        <p>
+                            Explore the embedding space of LLM completions colored by semantic topic category. 
+                            Search, zoom, and hover to discover patterns in spontaneous LLM generation!!
+                        </p>
+                        <div class="viz-meta">
+                            <span class="meta-tag">📊 Interactive</span>
+                            <span class="meta-tag">🔍 Zoomable</span>
+                            <span class="meta-tag">🎨 Topic colors</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- Citation
+        <section class="citation">
+            <h2>Citation</h2>
+            <div class="citation-box">
+                <button class="copy-btn" onclick="copyBibtex()">Copy</button>
+                <pre>@inproceedings{author2026llmthink,
+  title     = {What LLMs Think When You Don't Tell Them What to Think About},
+  author    = {Author, First and Author, Second and Author, Third},
+  booktitle = {Proceedings of the International Conference on Machine Learning (ICML)},
+  year      = {2026}
+}</pre>
+            </div>
+        </section> -->
+
+        <!-- Footer -->
+        <footer>
+            <p>What LLMs Think When You Don’t Tell Them What to Think About?</p>
+        </footer>
+    </div>
+
+    <script>
+        // Theme toggle functionality
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            if (newTheme === 'dark') {
+                html.setAttribute('data-theme', 'dark');
+            } else {
+                html.removeAttribute('data-theme');
+            }
+            localStorage.setItem('theme', newTheme);
+        }
+
+        // Load saved theme on page load
+        (function() {
+            const savedTheme = localStorage.getItem('theme');
+            
+            // Use saved theme, or default to light (no attribute needed)
+            if (savedTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+
+        // Copy BibTeX functionality
+        function copyBibtex() {
+            const bibtex = document.querySelector('.citation-box pre').textContent;
+            navigator.clipboard.writeText(bibtex).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = 'Copy', 2000);
+            });
+        }
+    </script>
+</body>
+</html>

@@ -669,7 +669,7 @@
                 </a>
                 <a href="interactive_LLM_top_of_mind.html" class="link-btn">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M1.5 1.75V13.5h13.75a.75.75 0 0 1 0 1.5H.75a.75.75 0 0 1-.75-.75V1.75a.75.75 0 0 1 1.5 0zm14.28 2.53-5.25 5.25a.75.75 0 0 1-1.06 0L7 7.06 4.28 9.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.25-3.25a.75.75 0 0 1 1.06 0L10 7.94l4.72-4.72a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042z"/></svg>
-                    Interactive Figure
+                    Interactive Figure (30 MB)
                 </a>
             </div>
         </header>
@@ -729,14 +729,17 @@
                 <div class="result-card">
                     <div class="result-header">
                         <div class="result-number">1</div>
-                        <h3>A broad and diverse range of topics</h3>
+                        <h3>A broad range of topics</h3>
                     </div>
-                    <p>
-                        Semantic map of near-unconstrained LLM generations. Each point represents a generated sample; colors denote semantic categories inferred post-hoc. Even without explicit topics, outputs cluster into clear regions. 
-                    </p>
                     <div class="result-figure">
                         <img src="figures/figure1.png" alt="Topic distribution">
                     </div>
+                    <p>
+                        Embedding visualization of near-unconstrained LLM generations. Each point represents a generated sample; colors denote semantic categories inferred post-hoc; dotted lines denote a high-density region. Even without explicit topics, model outputs cluster into clear regions, and each model family forms different semantic preferences. 
+                    </p>
+                    <p>
+                        As shown in Figure 1(a), despite the lack of explicit instructions or topics in prompts, LLMs generate a broad range of topics. LLMs generate various categories, including the liberal arts (e.g., literature, philosophy, and education), science and engineering (e.g., physics, mathematics, and programming), as well as areas such as law, finance, music, sports, cooking, agriculture, archaeology, military, and fashion. More surprisingly, shown in Figure 1(b), different model families gravitate toward different parts of the semantic space—even when given the same minimal prompts.
+                    </p>
                 </div>
 
                 <!-- Result 2 -->
@@ -745,12 +748,12 @@
                         <div class="result-number">2</div>
                         <h3>A heavy concentration on programming and mathematics among frontier LLMs</h3>
                     </div>
-                    <p>
-                        Top semantic categories by model family under near-unconstrained generation. Each family exhibits a stable and interpretable topic distribution. GPT-OSS overwhelmingly defaults to programming and mathematics, often at surprisingly advanced levels. Llama produces far more literary and narrative text, with less emphasis on technical domains. DeepSeek generates religious content at a substantially higher rate than other families. Qwen frequently outputs multiple-choice exam questions, complete with answer options.
-                    </p>
                     <div class="result-figure">
                         <img src="figures/figure2.png" alt="Model family comparison">
                     </div>
+                    <p>
+                        Top semantic categories by model family under near-unconstrained generation. Each family exhibits a stable and interpretable topic distribution. GPT-OSS overwhelmingly defaults to programming (27.1%) and mathematics (24.6%). More than half of a model family’s output concentrates in these two domains! Llama produces far more literary and narrative text (9.1%), with less emphasis on technical domains. DeepSeek often generates religious content at a substantially higher rate than other families. Qwen frequently outputs multiple-choice exam questions, complete with answer options.
+                    </p>
                 </div>
 
                 <!-- Result 3 -->
@@ -759,12 +762,15 @@
                         <div class="result-number">3</div>
                         <h3>Examples of model outputs under unconstrained settings</h3>
                     </div>
-                    <p>
-                        More examples are provided in the <a href="interactive_LLM_top_of_mind.html">interactive figure</a>.
-                    </p>
                     <div class="result-figure">
                         <img src="figures/figure3.png" alt="Starter phrase influence">
                     </div>
+                    <p>
+                        More examples are provided in the <a href="interactive_LLM_top_of_mind.html">interactive figure</a>.
+                    </p>
+                    <p>
+                        What is striking here is consistency. These distributions persist across different prompts, embedding models, and semantic labelers. The behavior looks less like noise and more like a population-level fingerprint. For more details, check out our paper!
+                    </p>
                 </div>
 
                 <!-- Result 4 -->
@@ -773,12 +779,12 @@
                         <div class="result-number">4</div>
                         <h3>Is GPT-OSS the most technically advanced model?</h3>
                     </div>
-                    <p>
-                        Distribution of difficulty levels in mathematics and programming. Advanced and expert-level content appears far more often in GPT-OSS outputs. When we examine math and programming outputs, GPT-OSS frequently produces advanced or expert-level content, such as graph algorithms or dynamic programming. Llama and Qwen skew much more toward basic or intermediate material. These depth differences remain even when controlling for labeling models and evaluation setups.
-                    </p>
                     <div class="result-figure">
                         <img src="figures/figure4.png" alt="Semantic clusters">
                     </div>
+                    <p>
+                        Distribution of difficulty levels in mathematics and programming. Advanced and expert-level content appears far more often in GPT-OSS outputs. When we examine math and programming outputs, GPT-OSS frequently produces advanced or expert-level content (68.2%), such as graph algorithms or dynamic programming. Llama and Qwen skew much more toward basic or intermediate material. These depth differences remain even when controlling for labeling models and evaluation setups.
+                    </p>
                 </div>
 
                 <!-- Result 5 -->
@@ -787,12 +793,15 @@
                         <div class="result-number">5</div>
                         <h3>Degenerate Text Is a Signal, Not Just Noise</h3>
                     </div>
-                    <p>
-                        (Top) Degenerate text behavior across model families. Degeneration frequency, onset position, and repetition length vary substantially by model. (Bottom) Examples of degenerate text. We mask text in Llama, as the links are accessible to personal social accounts. When constraints are removed, models sometimes fall into repetitive or degenerate patterns. This behavior is usually discarded as garbage. We treated it as data.
-                    </p>
                     <div class="result-figure">
                         <img src="figures/figure5.png" alt="Difficulty distribution">
                     </div>
+                    <p>
+                        (Top) Degenerate text behavior across model families. Degeneration frequency, onset position, and repetition length vary substantially by model. (Bottom) Examples of degenerate text. We mask text in Llama, as the links are accessible to personal social accounts. When constraints are removed, models sometimes fall into repetitive or degenerate patterns. This behavior is usually discarded as garbage. We treated it as data.
+                    </p>
+                    <p>
+                        By analyzing where degeneration starts, how often it occurs, and what it looks like, we uncovered stark model-specific differences. GPT-OSS tends to repeat short formatting artifacts such as code block delimiters (```\n\n```\n\n). Qwen produces long conversational phrases, emojis, and Chinese text. Llama sometimes emits URLs pointing to real personal Facebook and Instagram accounts. In-depth analysis is available in the paper.
+                    </p>
                 </div>
             </div>
         </section>
